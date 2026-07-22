@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="Guardá anuncios, organizá tu investigación y detectá oportunidades para crear ofertas propias.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Radar Ganador">
+  <title>Radar de Anuncios Ganadores</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <noscript>Necesitás activar JavaScript para utilizar Radar de Anuncios Ganadores.</noscript>
+
+  <div id="welcomeOverlay" class="welcome-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="welcome-card">
+      <img src="./assets/logo-radar.png" alt="Radar de Anuncios Ganadores" class="welcome-logo">
+      <p class="eyebrow">TU BIBLIOTECA PRIVADA</p>
+      <h1 id="welcomeTitle">Creá tu biblioteca de oportunidades</h1>
+      <p>Guardá los anuncios que encontrás y organizá las ofertas que podrían servirte como inspiración.</p>
+      <label for="welcomeName">Tu nombre <span class="optional">(opcional)</span></label>
+      <input id="welcomeName" type="text" maxlength="40" autocomplete="name" placeholder="Ej.: Mariana">
+      <button id="startRadarBtn" class="btn btn-primary btn-block">Comenzar mi Radar</button>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-area">
+        <button class="brand-button" data-go="home" aria-label="Ir al inicio">
+          <img src="./assets/logo-radar.png" alt="Radar de Anuncios Ganadores" class="brand-logo">
+        </button>
+        <div class="desktop-brand-copy">
+          <strong>Panel de investigación</strong>
+          <span>Organizá y evaluá tus anuncios</span>
+        </div>
+      </div>
+      <button id="settingsBtn" class="settings-button" aria-label="Abrir configuración" title="Configuración">
+        <span aria-hidden="true">⚙</span>
+        <span class="settings-label">Configuración</span>
+      </button>
+    </header>
+
+    <main id="mainContent" class="main-content">
+      <section id="view-home" class="view active" aria-labelledby="homeTitle">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">RADAR ACTIVO</p>
+            <h1 id="homeTitle"><span id="helloText">Hola</span></h1>
+            <p>Este es el estado de tu investigación.</p>
+          </div>
+          <div class="radar-pulse" aria-hidden="true"><span></span></div>
+        </div>
+
+        <button class="btn btn-primary btn-block" data-go="add">+ Agregar nuevo anuncio</button>
+
+        <div class="stats-grid" id="homeStats" aria-label="Resumen principal"></div>
+
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ACTIVIDAD RECIENTE</p>
+            <h2>Últimos anuncios</h2>
+          </div>
+          <button class="text-button" data-go="library">Ver biblioteca</button>
+        </div>
+        <div id="recentAds" class="card-list"></div>
+      </section>
+
+      <section id="view-add" class="view" aria-labelledby="formTitle">
+        <div class="page-heading">
+          <p class="eyebrow">CARGA RÁPIDA</p>
+          <h1 id="formTitle">Agregar anuncio</h1>
+          <p>Guardá solo lo necesario para volver a encontrarlo y evaluarlo.</p>
+        </div>
+
+        <form id="adForm" novalidate>
+          <input type="hidden" id="adId">
+          <div class="form-card">
+            <div class="field">
+              <label for="productName">Nombre del producto <span aria-hidden="true">*</span></label>
+              <input id="productName" name="productName" type="text" maxlength="90" placeholder="Recetario saludable para Air Fryer" required>
+              <small class="error" data-error="productName"></small>
+            </div>
+
+            <div class="field">
+              <label for="adLink">Link del anuncio <span aria-hidden="true">*</span></label>
+              <div class="input-action-row">
+                <input id="adLink" name="adLink" type="url" inputmode="url" placeholder="https://..." required>
+                <button id="pasteLinkBtn" type="button" class="mini-button">Pegar</button>
+              </div>
+              <small class="error" data-error="adLink"></small>
+            </div>
+
+            <div class="field">
+              <label for="niche">Nicho <span aria-hidden="true">*</span></label>
+              <input id="niche" name="niche" type="text" maxlength="50" list="nicheSuggestions" placeholder="Elegí o escribí un nicho" required>
+              <datalist id="nicheSuggestions">
+                <option value="Salud y bienestar"></option>
+                <option value="Gastronomía"></option>
+                <option value="Educación"></option>
+                <option value="Negocios"></option>
+                <option value="Belleza"></option>
+                <option value="Desarrollo personal"></option>
+                <option value="Finanzas"></option>
+                <option value="Mascotas"></option>
+                <option value="Manualidades"></option>
+                <option value="Productividad"></option>
+                <option value="Otro"></option>
+              </datalist>
+              <small class="error" data-error="niche"></small>
+            </div>
+
+            <fieldset class="field">
+              <legend>¿Vale la pena modelarlo? <span aria-hidden="true">*</span></legend>
+              <div class="evaluation-options">
+                <label class="eval-option eval-yes"><input type="radio" name="evaluation" value="yes"><span>Sí</span><small>Modelar</small></label>
+                <label class="eval-option eval-maybe"><input type="radio" name="evaluation" value="maybe"><span>Tal vez</span><small>Revisar</small></label>
+                <label class="eval-option eval-no"><input type="radio" name="evaluation" value="no"><span>No</span><small>Descartar</small></label>
+              </div>
+              <small class="error" data-error="evaluation"></small>
+            </fieldset>
+          </div>
+
+          <details class="optional-panel" open>
+            <summary>Agregar más información <span>Opcional</span></summary>
+            <div class="form-card optional-fields">
+              <div class="field">
+                <label for="pageLink">Página, fanpage o perfil</label>
+                <input id="pageLink" name="pageLink" type="url" inputmode="url" placeholder="https://...">
+                <small class="error" data-error="pageLink"></small>
+              </div>
+
+              <div class="two-cols">
+                <div class="field">
+                  <label for="activeAds">Anuncios activos</label>
+                  <input id="activeAds" name="activeAds" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                  <small class="error" data-error="activeAds"></small>
+                </div>
+                <div class="field">
+                  <label for="price">Precio de la oferta</label>
+                  <input id="price" name="price" type="text" maxlength="35" placeholder="$14.999 ARS">
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="imageInput">Captura del anuncio</label>
+                <input id="imageInput" name="imageInput" type="file" accept="image/*" capture="environment">
+                <div id="imagePreviewWrap" class="image-preview-wrap hidden">
+                  <img id="imagePreview" alt="Vista previa de la captura">
+                  <div class="inline-actions">
+                    <button id="changeImageBtn" type="button" class="btn btn-secondary btn-small">Cambiar</button>
+                    <button id="removeImageBtn" type="button" class="btn btn-danger btn-small">Eliminar</button>
+                  </div>
+                </div>
+                <small class="hint">La imagen se reduce automáticamente para ocupar menos espacio.</small>
+                <small class="error" data-error="image"></small>
+              </div>
+
+              <div class="field">
+                <label for="notes">¿Qué te llamó la atención?</label>
+                <textarea id="notes" name="notes" maxlength="500" rows="4" placeholder="La promesa es clara, tiene varios anuncios activos y la página presenta buenos bonos."></textarea>
+                <div class="counter"><span id="notesCount">0</span>/500</div>
+              </div>
+            </div>
+          </details>
+
+          <div class="sticky-form-actions">
+            <button id="saveAdBtn" class="btn btn-primary" type="submit">Guardar en mi Radar</button>
+            <button id="saveAnotherBtn" class="btn btn-secondary" type="button">Guardar y agregar otro</button>
+            <button id="cancelEditBtn" class="btn btn-ghost hidden" type="button">Cancelar edición</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="view-library" class="view" aria-labelledby="libraryTitle">
+        <div class="page-heading">
+          <p class="eyebrow">TU INVESTIGACIÓN</p>
+          <h1 id="libraryTitle">Biblioteca</h1>
+          <p>Buscá, filtrá y volvé a abrir las oportunidades que guardaste.</p>
+        </div>
+
+        <div class="filter-panel">
+          <label class="search-field" for="searchInput"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Buscar por producto, nicho o nota"></label>
+          <div class="quick-filters" id="evaluationFilters" role="group" aria-label="Filtrar por evaluación">
+            <button type="button" class="chip active" data-eval-filter="all">Todos</button>
+            <button type="button" class="chip" data-eval-filter="yes">Sí modelaría</button>
+            <button type="button" class="chip" data-eval-filter="maybe">Tal vez</button>
+            <button type="button" class="chip" data-eval-filter="no">No modelaría</button>
+          </div>
+          <div class="filter-row">
+            <select id="nicheFilter" aria-label="Filtrar por nicho"><option value="all">Todos los nichos</option></select>
+            <select id="sortSelect" aria-label="Ordenar anuncios">
+              <option value="recent">Más recientes</option>
+              <option value="oldest">Más antiguos</option>
+              <option value="activity-desc">Mayor cantidad de anuncios activos</option>
+              <option value="activity-asc">Menor cantidad de anuncios activos</option>
+              <option value="name">Nombre de A a Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="library-meta"><strong id="libraryCount">0 anuncios</strong><button id="clearFiltersBtn" class="text-button hidden">Limpiar filtros</button></div>
+        <div id="libraryList" class="card-list"></div>
+      </section>
+
+      <section id="view-summary" class="view" aria-labelledby="summaryTitle">
+        <div class="page-heading">
+          <p class="eyebrow">VISIÓN GENERAL</p>
+          <h1 id="summaryTitle">Resumen</h1>
+          <p>Una lectura objetiva de los registros cargados en tu Radar.</p>
+        </div>
+        <div id="summaryContent"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegación principal"><p class="nav-title">NAVEGACIÓN</p>
+      <button class="nav-item active" data-go="home" aria-label="Inicio"><span aria-hidden="true">⌂</span><small>Inicio</small></button>
+      <button class="nav-item" data-go="add" aria-label="Agregar"><span aria-hidden="true">＋</span><small>Agregar</small></button>
+      <button class="nav-item" data-go="library" aria-label="Biblioteca"><span aria-hidden="true">▤</span><small>Biblioteca</small></button>
+      <button class="nav-item" data-go="summary" aria-label="Resumen"><span aria-hidden="true">◔</span><small>Resumen</small></button>
+    </nav>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden"></div>
+
+  <section id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-header"><div><p class="eyebrow">PREFERENCIAS</p><h2 id="settingsTitle">Configuración</h2></div><button class="icon-button close-modal" aria-label="Cerrar">×</button></div>
+    <div class="modal-body">
+      <div class="settings-group">
+        <label for="settingsName">Tu nombre</label>
+        <div class="input-action-row"><input id="settingsName" type="text" maxlength="40" placeholder="Tu nombre"><button id="saveNameBtn" class="mini-button">Guardar</button></div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Respaldo de datos</h3>
+        <p>Descargá una copia de tus anuncios o recuperá un respaldo anterior.</p>
+        <div class="settings-actions">
+          <button id="exportBtn" class="btn btn-secondary">Descargar respaldo</button>
+          <label class="btn btn-secondary file-label">Importar respaldo<input id="importInput" type="file" accept="application/json,.json"></label>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Administrar registros</h3>
+        <div class="settings-actions">
+          <button id="removeDemoBtn" class="btn btn-secondary">Eliminar datos de demostración</button>
+          <button id="clearAllBtn" class="btn btn-danger">Borrar todos los anuncios</button>
+        </div>
+      </div>
+
+      <div class="settings-group info-box">
+        <h3>Sobre la aplicación</h3>
+        <p><strong>Radar de Anuncios Ganadores</strong> guarda toda la información únicamente en este dispositivo. No requiere cuenta ni envía datos a servidores.</p>
+        <p class="disclaimer">Radar de Anuncios Ganadores es una herramienta de organización e investigación. La cantidad de anuncios activos o la permanencia de una campaña no garantiza que una oferta sea rentable ni que produzca resultados de venta. Utilizá la información como referencia y desarrollá propuestas propias sin copiar contenidos, marcas o creatividades.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-header"><div><p class="eyebrow">DETALLE DEL ANUNCIO</p><h2 id="detailTitle">Detalle</h2></div><button class="icon-button close-modal" aria-label="Cerrar">×</button></div>
+    <div id="detailBody" class="modal-body"></div>
+  </section>
+
+  <section id="confirmModal" class="modal confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-header"><h2 id="confirmTitle">Confirmar acción</h2><button class="icon-button close-modal" aria-label="Cerrar">×</button></div>
+    <div class="modal-body">
+      <p id="confirmMessage"></p>
+      <div class="confirm-actions"><button id="confirmCancelBtn" class="btn btn-secondary">Cancelar</button><button id="confirmAcceptBtn" class="btn btn-danger">Eliminar</button></div>
+    </div>
+  </section>
+
+  <section id="importModeModal" class="modal confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="importModeTitle">
+    <div class="modal-header"><h2 id="importModeTitle">Importar respaldo</h2><button class="icon-button close-modal" aria-label="Cerrar">×</button></div>
+    <div class="modal-body">
+      <p>¿Querés reemplazar los datos actuales o combinarlos con el respaldo?</p>
+      <div class="stack-actions"><button id="replaceImportBtn" class="btn btn-primary">Reemplazar</button><button id="mergeImportBtn" class="btn btn-secondary">Combinar</button><button class="btn btn-ghost close-modal">Cancelar</button></div>
+    </div>
+  </section>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
