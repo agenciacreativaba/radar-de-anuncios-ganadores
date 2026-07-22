@@ -2,7 +2,7 @@
   'use strict';
   const STORAGE_KEY = 'radarAdsData_v1';
   const CONFIG_KEY = 'radarAdsConfig_v1';
-  const VERSION = 1;
+  const VERSION = 3;
   const MAX_IMAGE_BYTES = 2.2 * 1024 * 1024;
   const $ = (s, root=document) => root.querySelector(s);
   const $$ = (s, root=document) => [...root.querySelectorAll(s)];
@@ -16,15 +16,8 @@
     no:{label:'Descartar', phrase:'No parece una oportunidad prioritaria.', cls:'status-no'}
   };
 
-  const demoAds = [
-    {name:'Recetario Air Fryer',niche:'Gastronomía',activeAds:18,price:'$14.999 ARS',evaluation:'yes',notes:'Promesa clara y varios anuncios activos.'},
-    {name:'Guía de organización financiera',niche:'Finanzas',activeAds:7,price:'USD 9',evaluation:'maybe',notes:'Investigar mejor el público y la página de venta.'},
-    {name:'Curso de decoración con globos',niche:'Manualidades',activeAds:3,price:'USD 27',evaluation:'no',notes:'Oferta poco diferenciada.'},
-    {name:'App de planificación semanal',niche:'Productividad',activeAds:12,price:'USD 17',evaluation:'yes',notes:'Producto práctico y fácil de demostrar.'}
-  ].map((a,i)=>({
-    id:`demo-${i+1}`, adLink:'https://www.facebook.com/ads/library/', pageLink:'', image:'', isDemo:true,
-    createdAt:new Date(Date.now()-(i+1)*86400000).toISOString(), updatedAt:new Date(Date.now()-(i+1)*86400000).toISOString(), ...a
-  }));
+  // La aplicación comienza vacía. Cada alumno carga únicamente sus propios anuncios.
+
 
   let ads = loadAds();
   let config = loadConfig();
@@ -36,8 +29,15 @@
   let pendingImport = null;
 
   function loadAds(){
-    try { const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(parsed) ? parsed : [...demoAds]; }
-    catch { return [...demoAds]; }
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!Array.isArray(parsed)) return [];
+      // Migra instalaciones anteriores: elimina solo los registros de demostración,
+      // sin tocar los anuncios cargados por el alumno.
+      const ownAds = parsed.filter(ad => !ad?.isDemo && !String(ad?.id || '').startsWith('demo-'));
+      if (ownAds.length !== parsed.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(ownAds));
+      return ownAds;
+    } catch { return []; }
   }
   function loadConfig(){
     try { return {...{name:'',welcomed:false}, ...(JSON.parse(localStorage.getItem(CONFIG_KEY))||{})}; }
@@ -76,7 +76,8 @@
       <div class="card-actions">
         <button data-action="edit" data-id="${ad.id}">Editar</button>
         <button data-action="duplicate" data-id="${ad.id}">Duplicar</button>
-        <a href="${esc(ad.adLink)}" target="_blank" rel="noopener noreferrer">Abrir anuncio</a>
+        <a href="${esc(ad.adLink)}" target="_blank" rel="noopener noreferrer">Abrir biblioteca</a>
+        ${ad.pageLink?`<a href="${esc(ad.pageLink)}" target="_blank" rel="noopener noreferrer">Abrir fanpage</a>`:''}
         <button data-action="delete" data-id="${ad.id}">Eliminar</button>
       </div>
     </article>`;
@@ -145,18 +146,30 @@
   function clearErrors(){ $$('.error').forEach(e=>e.textContent=''); }
   function setError(name,msg){ const el=$(`[data-error="${name}"]`); if(el) el.textContent=msg; }
   function validateForm(){
-    clearErrors(); let ok=true; const name=$('#productName').value.trim(), adLink=$('#adLink').value.trim(), niche=$('#niche').value.trim(), page=$('#pageLink').value.trim(), active=$('#activeAds').value;
-    if(!name){setError('productName','Ingresá el nombre del producto.');ok=false}
-    if(!adLink||!isValidUrl(adLink)){setError('adLink','Ingresá un enlace válido que comience con http:// o https://.');ok=false}
+    clearErrors();
+    let ok=true;
+    const name=$('#productName').value.trim();
+    const niche=$('#niche').value.trim();
+    const page=$('#pageLink').value.trim();
+    const adLink=$('#adLink').value.trim();
+    const active=$('#activeAds').value.trim();
+    const price=$('#price').value.trim();
+    const notes=$('#notes').value.trim();
+
+    if(!name){setError('productName','Ingresá el nombre del producto u oferta.');ok=false}
     if(!niche){setError('niche','Ingresá o elegí un nicho.');ok=false}
-    if(!$('input[name="evaluation"]:checked')){setError('evaluation','Seleccioná una evaluación.');ok=false}
-    if(page&&!isValidUrl(page)){setError('pageLink','Ingresá un enlace válido.');ok=false}
-    if(active!==''&&(!Number.isInteger(Number(active))||Number(active)<0)){setError('activeAds','Ingresá un número entero igual o mayor a cero.');ok=false}
+    if(!page||!isValidUrl(page)){setError('pageLink','Ingresá un link válido de la fanpage.');ok=false}
+    if(!adLink||!isValidUrl(adLink)){setError('adLink','Ingresá un link válido de la Biblioteca de Anuncios.');ok=false}
+    if(active===''||!Number.isInteger(Number(active))||Number(active)<0){setError('activeAds','Ingresá la cantidad de anuncios activos con un número entero igual o mayor a cero.');ok=false}
+    if(!price){setError('price','Ingresá el precio de la oferta.');ok=false}
+    if(!imageData){setError('image','Cargá una captura del anuncio.');ok=false}
+    if(!notes){setError('notes','Escribí qué te llamó la atención.');ok=false}
+    if(!$('input[name="evaluation"]:checked')){setError('evaluation','Indicá si conviene modelarlo.');ok=false}
     return ok;
   }
   function formDataToAd(){
     const now=new Date().toISOString(); const old=editingId?ads.find(a=>a.id===editingId):null;
-    return {id:editingId||uid(),name:$('#productName').value.trim(),adLink:$('#adLink').value.trim(),pageLink:$('#pageLink').value.trim(),niche:$('#niche').value.trim(),activeAds:$('#activeAds').value===''?0:Number($('#activeAds').value),price:$('#price').value.trim(),image:imageData,evaluation:$('input[name="evaluation"]:checked').value,notes:$('#notes').value.trim(),createdAt:old?.createdAt||now,updatedAt:now,isDemo:false};
+    return {id:editingId||uid(),name:$('#productName').value.trim(),adLink:$('#adLink').value.trim(),pageLink:$('#pageLink').value.trim(),niche:$('#niche').value.trim(),activeAds:Number($('#activeAds').value),price:$('#price').value.trim(),image:imageData,evaluation:$('input[name="evaluation"]:checked').value,notes:$('#notes').value.trim(),createdAt:old?.createdAt||now,updatedAt:now,isDemo:false};
   }
   function saveForm(addAnother=false){
     if(!validateForm()) { toast('Revisá los campos marcados.',true); return false; }
@@ -187,7 +200,7 @@
       <div class="detail-grid"><div class="detail-item"><small>Precio</small><strong>${esc(a.price||'No registrado')}</strong></div><div class="detail-item"><small>Anuncios activos</small><strong>${Number(a.activeAds)||0}</strong></div><div class="detail-item"><small>Creado</small><strong>${formatDateTime(a.createdAt)}</strong></div><div class="detail-item"><small>Modificado</small><strong>${formatDateTime(a.updatedAt)}</strong></div></div>
       <div class="info-box"><h3>Tu evaluación</h3><p>${e.phrase}</p></div>
       ${a.notes?`<h3 style="margin-top:18px">¿Qué te llamó la atención?</h3><p style="color:var(--muted)">${esc(a.notes)}</p>`:''}
-      <div class="detail-actions"><a class="btn btn-primary" href="${esc(a.adLink)}" target="_blank" rel="noopener noreferrer">Abrir anuncio original</a>${a.pageLink?`<a class="btn btn-secondary" href="${esc(a.pageLink)}" target="_blank" rel="noopener noreferrer">Abrir página o fanpage</a>`:''}<button class="btn btn-secondary" data-action="edit" data-id="${a.id}">Editar</button><button class="btn btn-secondary" data-action="duplicate" data-id="${a.id}">Duplicar</button><button class="btn btn-danger" data-action="delete" data-id="${a.id}">Eliminar</button></div>`;
+      <div class="detail-actions"><a class="btn btn-primary" href="${esc(a.adLink)}" target="_blank" rel="noopener noreferrer">Abrir en la Biblioteca de Anuncios</a>${a.pageLink?`<a class="btn btn-secondary" href="${esc(a.pageLink)}" target="_blank" rel="noopener noreferrer">Abrir fanpage</a>`:''}<button class="btn btn-secondary" data-action="edit" data-id="${a.id}">Editar</button><button class="btn btn-secondary" data-action="duplicate" data-id="${a.id}">Duplicar</button><button class="btn btn-danger" data-action="delete" data-id="${a.id}">Eliminar</button></div>`;
     openModal('detailModal');
   }
   async function compressImage(file){
@@ -215,20 +228,20 @@
       const act=e.target.closest('[data-action]'); if(!act)return; const {action,id}=act.dataset;
       if(action==='detail')detailAd(id); if(action==='edit')editAd(id); if(action==='duplicate')duplicateAd(id); if(action==='delete')deleteAd(id); if(action==='go-add')showView('add'); if(action==='clear-filters')clearFilters();
     });
-    $('#startRadarBtn').addEventListener('click',()=>{config.name=$('#welcomeName').value.trim();config.welcomed=true;saveAll();$('#welcomeOverlay').classList.add('hidden');renderHome();toast('¡Tu Radar está listo!');});
+    $('#startRadarBtn').addEventListener('click',()=>{const name=$('#welcomeName').value.trim();if(!name){setError('welcomeName','Ingresá tu nombre para comenzar.');return;}setError('welcomeName','');config.name=name;config.welcomed=true;saveAll();$('#welcomeOverlay').classList.add('hidden');renderHome();toast('¡Tu Radar está listo!');});
     $('#settingsBtn').addEventListener('click',()=>{$('#settingsName').value=config.name||'';openModal('settingsModal')});
     $$('.close-modal').forEach(b=>b.addEventListener('click',closeModals)); $('#modalBackdrop').addEventListener('click',closeModals); $('#confirmCancelBtn').addEventListener('click',closeModals); $('#confirmAcceptBtn').addEventListener('click',()=>pendingConfirm&&pendingConfirm());
     $('#adForm').addEventListener('submit',e=>{e.preventDefault();saveForm(false)}); $('#saveAnotherBtn').addEventListener('click',()=>saveForm(true)); $('#cancelEditBtn').addEventListener('click',()=>{resetForm();toast('Edición cancelada.')});
-    $('#pasteLinkBtn').addEventListener('click',async()=>{try{$('#adLink').value=await navigator.clipboard.readText();toast('Link pegado.')}catch{toast('Tu navegador no permitió acceder al portapapeles.',true)}});
+    $('#pasteFanpageBtn').addEventListener('click',async()=>{try{$('#pageLink').value=await navigator.clipboard.readText();toast('Link de la fanpage pegado.')}catch{toast('Tu navegador no permitió acceder al portapapeles.',true)}});
+    $('#pasteLinkBtn').addEventListener('click',async()=>{try{$('#adLink').value=await navigator.clipboard.readText();toast('Link de la Biblioteca pegado.')}catch{toast('Tu navegador no permitió acceder al portapapeles.',true)}});
     $('#imageInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;setError('image','');try{imageData=await compressImage(file);$('#imagePreview').src=imageData;$('#imagePreviewWrap').classList.remove('hidden')}catch(err){setError('image',err.message);e.target.value=''}});
     $('#changeImageBtn').addEventListener('click',()=>$('#imageInput').click()); $('#removeImageBtn').addEventListener('click',()=>{imageData='';$('#imageInput').value='';$('#imagePreviewWrap').classList.add('hidden')});
     $('#notes').addEventListener('input',e=>$('#notesCount').textContent=e.target.value.length);
     $('#searchInput').addEventListener('input',renderLibrary); $('#nicheFilter').addEventListener('change',renderLibrary); $('#sortSelect').addEventListener('change',renderLibrary); $('#clearFiltersBtn').addEventListener('click',clearFilters);
     $('#evaluationFilters').addEventListener('click',e=>{const b=e.target.closest('[data-eval-filter]');if(!b)return;evalFilter=b.dataset.evalFilter;$$('#evaluationFilters .chip').forEach(c=>c.classList.toggle('active',c===b));renderLibrary()});
-    $('#saveNameBtn').addEventListener('click',()=>{config.name=$('#settingsName').value.trim();saveAll();renderHome();toast('Nombre actualizado.')});
+    $('#saveNameBtn').addEventListener('click',()=>{const name=$('#settingsName').value.trim();if(!name){toast('Ingresá un nombre.',true);return;}config.name=name;saveAll();renderHome();toast('Nombre actualizado.')});
     $('#exportBtn').addEventListener('click',exportData); $('#importInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!validateImport(data))throw new Error();pendingImport=data;openModal('importModeModal')}catch{toast('El archivo no tiene una estructura de respaldo válida.',true)}finally{e.target.value=''}};r.readAsText(f)});
     $('#replaceImportBtn').addEventListener('click',()=>applyImport('replace')); $('#mergeImportBtn').addEventListener('click',()=>applyImport('merge'));
-    $('#removeDemoBtn').addEventListener('click',()=>confirmAction('Se eliminarán únicamente los datos de demostración. Tus anuncios propios se conservarán.','Eliminar ejemplos',()=>{ads=ads.filter(a=>!a.isDemo);saveAll();closeModals();renderAll();toast('Datos de demostración eliminados.')}));
     $('#clearAllBtn').addEventListener('click',()=>confirmAction('Esta acción eliminará todos los anuncios guardados y no podrá deshacerse.','Eliminar todos',()=>{ads=[];saveAll();closeModals();renderAll();toast('Todos los anuncios fueron eliminados.')}));
     document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModals()});
   }

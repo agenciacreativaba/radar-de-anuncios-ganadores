@@ -215,3 +215,16 @@
   .settings-button{width:44px;height:44px;border:1px solid var(--border);border-radius:14px;background:rgba(21,21,25,.9);color:var(--gold2);font-size:22px;display:grid;place-items:center;padding:0}
   .brand-area{display:flex;align-items:center}
 }
+
+/* Formulario actualizado: todos los datos son obligatorios y visibles */
+.evaluation-final{
+  margin-top:22px;
+  padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+@media (min-width:900px){
+  #adForm>.secondary-form-card{
+    grid-column:2;
+    grid-row:1;
+  }
+}

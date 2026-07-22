@@ -19,12 +19,13 @@
 
   <div id="welcomeOverlay" class="welcome-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
     <div class="welcome-card">
-      <img src="./assets/logo-radar.png" alt="Radar de Anuncios Ganadores" class="welcome-logo">
+      <img src="./assets/logo-radar.jpg" alt="Radar de Anuncios Ganadores" class="welcome-logo">
       <p class="eyebrow">TU BIBLIOTECA PRIVADA</p>
       <h1 id="welcomeTitle">Creá tu biblioteca de oportunidades</h1>
       <p>Guardá los anuncios que encontrás y organizá las ofertas que podrían servirte como inspiración.</p>
-      <label for="welcomeName">Tu nombre <span class="optional">(opcional)</span></label>
-      <input id="welcomeName" type="text" maxlength="40" autocomplete="name" placeholder="Ej.: Mariana">
+      <label for="welcomeName">Tu nombre <span aria-hidden="true">*</span></label>
+      <input id="welcomeName" type="text" maxlength="40" autocomplete="name" placeholder="Escribí tu nombre" required>
+      <small class="error" data-error="welcomeName"></small>
       <button id="startRadarBtn" class="btn btn-primary btn-block">Comenzar mi Radar</button>
     </div>
   </div>
@@ -33,7 +34,7 @@
     <header class="app-header">
       <div class="brand-area">
         <button class="brand-button" data-go="home" aria-label="Ir al inicio">
-          <img src="./assets/logo-radar.png" alt="Radar de Anuncios Ganadores" class="brand-logo">
+          <img src="./assets/logo-radar.jpg" alt="Radar de Anuncios Ganadores" class="brand-logo">
         </button>
         <div class="desktop-brand-copy">
           <strong>Panel de investigación</strong>
@@ -75,25 +76,17 @@
         <div class="page-heading">
           <p class="eyebrow">CARGA RÁPIDA</p>
           <h1 id="formTitle">Agregar anuncio</h1>
-          <p>Guardá solo lo necesario para volver a encontrarlo y evaluarlo.</p>
+          <p>Completá todos los datos del anuncio que encontraste.</p>
         </div>
 
         <form id="adForm" novalidate>
           <input type="hidden" id="adId">
+
           <div class="form-card">
             <div class="field">
-              <label for="productName">Nombre del producto <span aria-hidden="true">*</span></label>
-              <input id="productName" name="productName" type="text" maxlength="90" placeholder="Recetario saludable para Air Fryer" required>
+              <label for="productName">Nombre del producto u oferta <span aria-hidden="true">*</span></label>
+              <input id="productName" name="productName" type="text" maxlength="90" placeholder="Escribí el nombre exacto de la oferta" required>
               <small class="error" data-error="productName"></small>
-            </div>
-
-            <div class="field">
-              <label for="adLink">Link del anuncio <span aria-hidden="true">*</span></label>
-              <div class="input-action-row">
-                <input id="adLink" name="adLink" type="url" inputmode="url" placeholder="https://..." required>
-                <button id="pasteLinkBtn" type="button" class="mini-button">Pegar</button>
-              </div>
-              <small class="error" data-error="adLink"></small>
             </div>
 
             <div class="field">
@@ -115,59 +108,71 @@
               <small class="error" data-error="niche"></small>
             </div>
 
-            <fieldset class="field">
-              <legend>¿Vale la pena modelarlo? <span aria-hidden="true">*</span></legend>
+            <div class="field">
+              <label for="pageLink">Link de la fanpage <span aria-hidden="true">*</span></label>
+              <div class="input-action-row">
+                <input id="pageLink" name="pageLink" type="url" inputmode="url" placeholder="https://www.facebook.com/..." required>
+                <button id="pasteFanpageBtn" type="button" class="mini-button">Pegar</button>
+              </div>
+              <small class="hint">Pegá el enlace de la página que publica el anuncio.</small>
+              <small class="error" data-error="pageLink"></small>
+            </div>
+
+            <div class="field">
+              <label for="adLink">Link de la Biblioteca de Anuncios <span aria-hidden="true">*</span></label>
+              <div class="input-action-row">
+                <input id="adLink" name="adLink" type="url" inputmode="url" placeholder="https://www.facebook.com/ads/library/..." required>
+                <button id="pasteLinkBtn" type="button" class="mini-button">Pegar</button>
+              </div>
+              <small class="hint">Abrí el anuncio en la Biblioteca de Meta y copiá la dirección del navegador.</small>
+              <small class="error" data-error="adLink"></small>
+            </div>
+
+            <div class="field">
+              <label for="activeAds">Cantidad de anuncios activos <span aria-hidden="true">*</span></label>
+              <input id="activeAds" name="activeAds" type="number" min="0" step="1" inputmode="numeric" placeholder="Ingresá la cantidad" required>
+              <small class="error" data-error="activeAds"></small>
+            </div>
+          </div>
+
+          <div class="form-card secondary-form-card">
+            <div class="field">
+              <label for="price">Precio de la oferta <span aria-hidden="true">*</span></label>
+              <input id="price" name="price" type="text" maxlength="35" placeholder="Ingresá el precio publicado" required>
+              <small class="error" data-error="price"></small>
+            </div>
+
+            <div class="field">
+              <label for="imageInput">Captura del anuncio <span aria-hidden="true">*</span></label>
+              <input id="imageInput" name="imageInput" type="file" accept="image/*" capture="environment" required>
+              <div id="imagePreviewWrap" class="image-preview-wrap hidden">
+                <img id="imagePreview" alt="Vista previa de la captura">
+                <div class="inline-actions">
+                  <button id="changeImageBtn" type="button" class="btn btn-secondary btn-small">Cambiar</button>
+                  <button id="removeImageBtn" type="button" class="btn btn-danger btn-small">Eliminar</button>
+                </div>
+              </div>
+              <small class="hint">La imagen se reduce automáticamente para ocupar menos espacio.</small>
+              <small class="error" data-error="image"></small>
+            </div>
+
+            <div class="field">
+              <label for="notes">¿Qué te llamó la atención? <span aria-hidden="true">*</span></label>
+              <textarea id="notes" name="notes" maxlength="500" rows="5" placeholder="Escribí qué observaste en el anuncio y en la oferta" required></textarea>
+              <div class="counter"><span id="notesCount">0</span>/500</div>
+              <small class="error" data-error="notes"></small>
+            </div>
+
+            <fieldset class="field evaluation-final">
+              <legend>¿Conviene modelarlo? <span aria-hidden="true">*</span></legend>
               <div class="evaluation-options">
-                <label class="eval-option eval-yes"><input type="radio" name="evaluation" value="yes"><span>Sí</span><small>Modelar</small></label>
+                <label class="eval-option eval-yes"><input type="radio" name="evaluation" value="yes" required><span>Sí</span><small>Modelar</small></label>
                 <label class="eval-option eval-maybe"><input type="radio" name="evaluation" value="maybe"><span>Tal vez</span><small>Revisar</small></label>
                 <label class="eval-option eval-no"><input type="radio" name="evaluation" value="no"><span>No</span><small>Descartar</small></label>
               </div>
               <small class="error" data-error="evaluation"></small>
             </fieldset>
           </div>
-
-          <details class="optional-panel" open>
-            <summary>Agregar más información <span>Opcional</span></summary>
-            <div class="form-card optional-fields">
-              <div class="field">
-                <label for="pageLink">Página, fanpage o perfil</label>
-                <input id="pageLink" name="pageLink" type="url" inputmode="url" placeholder="https://...">
-                <small class="error" data-error="pageLink"></small>
-              </div>
-
-              <div class="two-cols">
-                <div class="field">
-                  <label for="activeAds">Anuncios activos</label>
-                  <input id="activeAds" name="activeAds" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
-                  <small class="error" data-error="activeAds"></small>
-                </div>
-                <div class="field">
-                  <label for="price">Precio de la oferta</label>
-                  <input id="price" name="price" type="text" maxlength="35" placeholder="$14.999 ARS">
-                </div>
-              </div>
-
-              <div class="field">
-                <label for="imageInput">Captura del anuncio</label>
-                <input id="imageInput" name="imageInput" type="file" accept="image/*" capture="environment">
-                <div id="imagePreviewWrap" class="image-preview-wrap hidden">
-                  <img id="imagePreview" alt="Vista previa de la captura">
-                  <div class="inline-actions">
-                    <button id="changeImageBtn" type="button" class="btn btn-secondary btn-small">Cambiar</button>
-                    <button id="removeImageBtn" type="button" class="btn btn-danger btn-small">Eliminar</button>
-                  </div>
-                </div>
-                <small class="hint">La imagen se reduce automáticamente para ocupar menos espacio.</small>
-                <small class="error" data-error="image"></small>
-              </div>
-
-              <div class="field">
-                <label for="notes">¿Qué te llamó la atención?</label>
-                <textarea id="notes" name="notes" maxlength="500" rows="4" placeholder="La promesa es clara, tiene varios anuncios activos y la página presenta buenos bonos."></textarea>
-                <div class="counter"><span id="notesCount">0</span>/500</div>
-              </div>
-            </div>
-          </details>
 
           <div class="sticky-form-actions">
             <button id="saveAdBtn" class="btn btn-primary" type="submit">Guardar en mi Radar</button>
@@ -247,8 +252,8 @@
 
       <div class="settings-group">
         <h3>Administrar registros</h3>
+        <p>La biblioteca comienza vacía y contiene únicamente los anuncios que vos cargues.</p>
         <div class="settings-actions">
-          <button id="removeDemoBtn" class="btn btn-secondary">Eliminar datos de demostración</button>
           <button id="clearAllBtn" class="btn btn-danger">Borrar todos los anuncios</button>
         </div>
       </div>
